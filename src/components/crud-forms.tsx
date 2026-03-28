@@ -85,6 +85,46 @@ type EmployeeValues = z.infer<typeof employeeSchema>;
 type ShiftValues = z.infer<typeof shiftSchema>;
 type SnackTypeValues = z.infer<typeof snackTypeSchema>;
 type MenuValues = z.infer<typeof menuSchema>;
+type ContractValues = z.infer<typeof contractSchema>;
+type WorksiteValues = z.infer<typeof worksiteSchema>;
+type CostCenterValues = z.infer<typeof costCenterSchema>;
+type TotemValues = z.infer<typeof totemSchema>;
+
+
+const contractSchema = z.object({
+  clientId: z.string().min(1),
+  name: z.string().min(2),
+  code: z.string().min(2),
+  startDate: z.string().min(1),
+  endDate: z.string().optional(),
+  active: z.boolean(),
+});
+
+const worksiteSchema = z.object({
+  clientId: z.string().min(1),
+  contractId: z.string().optional(),
+  name: z.string().min(2),
+  code: z.string().min(2),
+  location: z.string().optional(),
+  active: z.boolean(),
+});
+
+const costCenterSchema = z.object({
+  clientId: z.string().min(1),
+  contractId: z.string().optional(),
+  name: z.string().min(2),
+  code: z.string().min(2),
+  active: z.boolean(),
+});
+
+const totemSchema = z.object({
+  clientId: z.string().min(1),
+  worksiteId: z.string().optional(),
+  code: z.string().min(2),
+  name: z.string().min(2),
+  locationDescription: z.string().optional(),
+  active: z.boolean(),
+});
 
 function FormError({ message }: { message: string | null }) {
   return message ? <p className="text-sm text-rose-600">{message}</p> : null;
@@ -155,12 +195,18 @@ export function EmployeeCrudForm({
   clientId,
   shifts,
   snackTypes,
+  contracts,
+  worksites,
+  costCenters,
   mode,
 }: {
   defaultValues?: Partial<EmployeeValues>;
   clientId: string;
   shifts: Array<{ id: string; name: string }>;
   snackTypes: Array<{ id: string; name: string }>;
+  contracts: Array<{ id: string; name: string }>;
+  worksites: Array<{ id: string; name: string }>;
+  costCenters: Array<{ id: string; name: string }>;
   mode: "create" | "edit";
 }) {
   const [isPending, startTransition] = useTransition();
@@ -218,6 +264,18 @@ export function EmployeeCrudForm({
         <input type="checkbox" {...form.register("active")} />
         Trabajador activo
       </label>
+      <select className="rounded-xl border px-3 py-2" {...form.register("contractId")}>
+        <option value="">Sin contrato</option>
+        {contracts.map((contract) => <option key={contract.id} value={contract.id}>{contract.name}</option>)}
+      </select>
+      <select className="rounded-xl border px-3 py-2" {...form.register("worksiteId")}>
+        <option value="">Sin faena</option>
+        {worksites.map((worksite) => <option key={worksite.id} value={worksite.id}>{worksite.name}</option>)}
+      </select>
+      <select className="rounded-xl border px-3 py-2 md:col-span-2" {...form.register("costCenterId")}>
+        <option value="">Sin centro de costo</option>
+        {costCenters.map((center) => <option key={center.id} value={center.id}>{center.name}</option>)}
+      </select>
       <label className="flex items-center gap-2 rounded-xl border px-3 py-2 md:col-span-2">
         <input type="checkbox" {...form.register("hasSnack")} />
         Tiene colacion
@@ -439,6 +497,160 @@ export function WeeklyMenuForm({ clientId, selectionCloseDay, selectionCloseHour
       <button disabled={isPending} className="rounded-xl bg-zinc-900 px-4 py-2 text-white">
         {isPending ? "Guardando..." : "Crear menu semanal"}
       </button>
+      <FormError message={message} />
+    </form>
+  );
+}
+
+
+export function ContractCrudForm({ clientId }: { clientId: string }) {
+  const [isPending, startTransition] = useTransition();
+  const [message, setMessage] = useState<string | null>(null);
+  const today = new Date().toISOString().slice(0, 10);
+  const form = useForm<ContractValues>({
+    resolver: zodResolver(contractSchema),
+    defaultValues: { clientId, name: "", code: "", startDate: today, endDate: "", active: true },
+  });
+
+  const onSubmit = form.handleSubmit((values) => {
+    setMessage(null);
+    startTransition(async () => {
+      const response = await fetch("/api/contracts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const data = await response.json();
+      setMessage(response.ok ? "Contrato creado correctamente." : data.error ?? "No fue posible crear el contrato.");
+      if (response.ok) window.location.reload();
+    });
+  });
+
+  return (
+    <form className="grid gap-3 md:grid-cols-2" onSubmit={onSubmit}>
+      <input type="hidden" {...form.register("clientId")} />
+      <input className="rounded-xl border px-3 py-2" placeholder="Nombre contrato" {...form.register("name")} />
+      <input className="rounded-xl border px-3 py-2" placeholder="Codigo" {...form.register("code")} />
+      <input className="rounded-xl border px-3 py-2" type="date" {...form.register("startDate")} />
+      <input className="rounded-xl border px-3 py-2" type="date" {...form.register("endDate")} />
+      <label className="flex items-center gap-2 rounded-xl border px-3 py-2 md:col-span-2"><input type="checkbox" {...form.register("active")} />Contrato activo</label>
+      <button disabled={isPending} className="rounded-xl bg-zinc-900 px-4 py-2 text-white md:col-span-2">{isPending ? "Guardando..." : "Crear contrato"}</button>
+      <FormError message={message} />
+    </form>
+  );
+}
+
+export function WorksiteCrudForm({ clientId, contracts }: { clientId: string; contracts: Array<{ id: string; name: string }> }) {
+  const [isPending, startTransition] = useTransition();
+  const [message, setMessage] = useState<string | null>(null);
+  const form = useForm<WorksiteValues>({
+    resolver: zodResolver(worksiteSchema),
+    defaultValues: { clientId, contractId: contracts[0]?.id ?? "", name: "", code: "", location: "", active: true },
+  });
+
+  const onSubmit = form.handleSubmit((values) => {
+    setMessage(null);
+    startTransition(async () => {
+      const response = await fetch("/api/worksites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const data = await response.json();
+      setMessage(response.ok ? "Faena creada correctamente." : data.error ?? "No fue posible crear la faena.");
+      if (response.ok) window.location.reload();
+    });
+  });
+
+  return (
+    <form className="grid gap-3 md:grid-cols-2" onSubmit={onSubmit}>
+      <input type="hidden" {...form.register("clientId")} />
+      <select className="rounded-xl border px-3 py-2" {...form.register("contractId")}>
+        <option value="">Sin contrato</option>
+        {contracts.map((contract) => <option key={contract.id} value={contract.id}>{contract.name}</option>)}
+      </select>
+      <input className="rounded-xl border px-3 py-2" placeholder="Nombre faena" {...form.register("name")} />
+      <input className="rounded-xl border px-3 py-2" placeholder="Codigo" {...form.register("code")} />
+      <input className="rounded-xl border px-3 py-2" placeholder="Ubicacion" {...form.register("location")} />
+      <label className="flex items-center gap-2 rounded-xl border px-3 py-2 md:col-span-2"><input type="checkbox" {...form.register("active")} />Faena activa</label>
+      <button disabled={isPending} className="rounded-xl bg-zinc-900 px-4 py-2 text-white md:col-span-2">{isPending ? "Guardando..." : "Crear faena"}</button>
+      <FormError message={message} />
+    </form>
+  );
+}
+
+export function CostCenterCrudForm({ clientId, contracts }: { clientId: string; contracts: Array<{ id: string; name: string }> }) {
+  const [isPending, startTransition] = useTransition();
+  const [message, setMessage] = useState<string | null>(null);
+  const form = useForm<CostCenterValues>({
+    resolver: zodResolver(costCenterSchema),
+    defaultValues: { clientId, contractId: contracts[0]?.id ?? "", name: "", code: "", active: true },
+  });
+
+  const onSubmit = form.handleSubmit((values) => {
+    setMessage(null);
+    startTransition(async () => {
+      const response = await fetch("/api/cost-centers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const data = await response.json();
+      setMessage(response.ok ? "Centro de costo creado correctamente." : data.error ?? "No fue posible crear el centro de costo.");
+      if (response.ok) window.location.reload();
+    });
+  });
+
+  return (
+    <form className="grid gap-3 md:grid-cols-2" onSubmit={onSubmit}>
+      <input type="hidden" {...form.register("clientId")} />
+      <select className="rounded-xl border px-3 py-2" {...form.register("contractId")}>
+        <option value="">Sin contrato</option>
+        {contracts.map((contract) => <option key={contract.id} value={contract.id}>{contract.name}</option>)}
+      </select>
+      <input className="rounded-xl border px-3 py-2" placeholder="Nombre centro de costo" {...form.register("name")} />
+      <input className="rounded-xl border px-3 py-2" placeholder="Codigo" {...form.register("code")} />
+      <label className="flex items-center gap-2 rounded-xl border px-3 py-2 md:col-span-2"><input type="checkbox" {...form.register("active")} />Centro de costo activo</label>
+      <button disabled={isPending} className="rounded-xl bg-zinc-900 px-4 py-2 text-white md:col-span-2">{isPending ? "Guardando..." : "Crear centro de costo"}</button>
+      <FormError message={message} />
+    </form>
+  );
+}
+
+export function TotemCrudForm({ clientId, worksites }: { clientId: string; worksites: Array<{ id: string; name: string }> }) {
+  const [isPending, startTransition] = useTransition();
+  const [message, setMessage] = useState<string | null>(null);
+  const form = useForm<TotemValues>({
+    resolver: zodResolver(totemSchema),
+    defaultValues: { clientId, worksiteId: worksites[0]?.id ?? "", code: "", name: "", locationDescription: "", active: true },
+  });
+
+  const onSubmit = form.handleSubmit((values) => {
+    setMessage(null);
+    startTransition(async () => {
+      const response = await fetch("/api/totem-devices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      const data = await response.json();
+      setMessage(response.ok ? "Totem creado correctamente." : data.error ?? "No fue posible crear el totem.");
+      if (response.ok) window.location.reload();
+    });
+  });
+
+  return (
+    <form className="grid gap-3 md:grid-cols-2" onSubmit={onSubmit}>
+      <input type="hidden" {...form.register("clientId")} />
+      <select className="rounded-xl border px-3 py-2" {...form.register("worksiteId")}>
+        <option value="">Sin faena</option>
+        {worksites.map((worksite) => <option key={worksite.id} value={worksite.id}>{worksite.name}</option>)}
+      </select>
+      <input className="rounded-xl border px-3 py-2" placeholder="Codigo dispositivo" {...form.register("code")} />
+      <input className="rounded-xl border px-3 py-2" placeholder="Nombre totem" {...form.register("name")} />
+      <input className="rounded-xl border px-3 py-2 md:col-span-2" placeholder="Ubicacion / descripcion" {...form.register("locationDescription")} />
+      <label className="flex items-center gap-2 rounded-xl border px-3 py-2 md:col-span-2"><input type="checkbox" {...form.register("active")} />Totem activo</label>
+      <button disabled={isPending} className="rounded-xl bg-zinc-900 px-4 py-2 text-white md:col-span-2">{isPending ? "Guardando..." : "Crear totem"}</button>
       <FormError message={message} />
     </form>
   );
