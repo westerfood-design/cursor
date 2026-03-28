@@ -127,7 +127,7 @@ const totemSchema = z.object({
 });
 
 function FormError({ message }: { message: string | null }) {
-  return message ? <p className="text-sm text-rose-600">{message}</p> : null;
+  return message ? <p className="text-sm text-[var(--wf-red-dark)]">{message}</p> : null;
 }
 
 export function ClientCrudForm({
@@ -171,18 +171,18 @@ export function ClientCrudForm({
   return (
     <form className="grid gap-3 md:grid-cols-2" onSubmit={onSubmit}>
       <input type="hidden" {...form.register("id")} />
-      <input className="rounded-xl border px-3 py-2" placeholder="Nombre comercial" {...form.register("name")} />
-      <input className="rounded-xl border px-3 py-2" placeholder="Slug" {...form.register("slug")} disabled={mode === "edit"} />
-      <input className="rounded-xl border px-3 py-2" placeholder="Razon social" {...form.register("legalName")} />
-      <input className="rounded-xl border px-3 py-2" placeholder="RUT empresa" {...form.register("taxId")} />
-      <input className="rounded-xl border px-3 py-2" placeholder="Timezone" {...form.register("timezone")} />
-      <label className="flex items-center gap-2 rounded-xl border px-3 py-2">
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Nombre comercial" {...form.register("name")} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Slug" {...form.register("slug")} disabled={mode === "edit"} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Razon social" {...form.register("legalName")} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="RUT empresa" {...form.register("taxId")} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Timezone" {...form.register("timezone")} />
+      <label className="flex items-center gap-2 rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none">
         <input type="checkbox" {...form.register("active")} />
         Cliente activo
       </label>
-      <input className="rounded-xl border px-3 py-2" type="number" placeholder="Dia cierre (0-6)" {...form.register("selectionCloseDay", { valueAsNumber: true })} />
-      <input className="rounded-xl border px-3 py-2" type="number" placeholder="Hora cierre" {...form.register("selectionCloseHour", { valueAsNumber: true })} />
-      <button disabled={isPending} className="rounded-xl bg-zinc-900 px-4 py-2 text-white md:col-span-2">
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" type="number" placeholder="Dia cierre (0-6)" {...form.register("selectionCloseDay", { valueAsNumber: true })} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" type="number" placeholder="Hora cierre" {...form.register("selectionCloseHour", { valueAsNumber: true })} />
+      <button disabled={isPending} className="rounded-xl bg-[var(--wf-red)] px-4 py-2 text-white transition hover:bg-[var(--wf-red-dark)] md:col-span-2">
         {isPending ? "Guardando..." : mode === "create" ? "Crear cliente" : "Actualizar cliente"}
       </button>
       <FormError message={message} />
@@ -253,42 +253,42 @@ export function EmployeeCrudForm({
     <form className="grid gap-3 md:grid-cols-2" onSubmit={onSubmit}>
       <input type="hidden" {...form.register("id")} />
       <input type="hidden" {...form.register("clientId")} />
-      <input className="rounded-xl border px-3 py-2" placeholder="Nombre" {...form.register("firstName")} />
-      <input className="rounded-xl border px-3 py-2" placeholder="Apellido" {...form.register("lastName")} />
-      <input className="rounded-xl border px-3 py-2" placeholder="RUT" {...form.register("rut")} disabled={mode === "edit"} />
-      <input className="rounded-xl border px-3 py-2" placeholder="Correo" {...form.register("email")} />
-      <select className="rounded-xl border px-3 py-2" {...form.register("shiftId")}>
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Nombre" {...form.register("firstName")} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Apellido" {...form.register("lastName")} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="RUT" {...form.register("rut")} disabled={mode === "edit"} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Correo" {...form.register("email")} />
+      <select className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" {...form.register("shiftId")}>
         {shifts.map((shift) => <option key={shift.id} value={shift.id}>{shift.name}</option>)}
       </select>
-      <label className="flex items-center gap-2 rounded-xl border px-3 py-2">
+      <label className="flex items-center gap-2 rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none">
         <input type="checkbox" {...form.register("active")} />
         Trabajador activo
       </label>
-      <select className="rounded-xl border px-3 py-2" {...form.register("contractId")}>
+      <select className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" {...form.register("contractId")}>
         <option value="">Sin contrato</option>
         {contracts.map((contract) => <option key={contract.id} value={contract.id}>{contract.name}</option>)}
       </select>
-      <select className="rounded-xl border px-3 py-2" {...form.register("worksiteId")}>
+      <select className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" {...form.register("worksiteId")}>
         <option value="">Sin faena</option>
         {worksites.map((worksite) => <option key={worksite.id} value={worksite.id}>{worksite.name}</option>)}
       </select>
-      <select className="rounded-xl border px-3 py-2 md:col-span-2" {...form.register("costCenterId")}>
+      <select className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none md:col-span-2" {...form.register("costCenterId")}>
         <option value="">Sin centro de costo</option>
         {costCenters.map((center) => <option key={center.id} value={center.id}>{center.name}</option>)}
       </select>
-      <label className="flex items-center gap-2 rounded-xl border px-3 py-2 md:col-span-2">
+      <label className="flex items-center gap-2 rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none md:col-span-2">
         <input type="checkbox" {...form.register("hasSnack")} />
         Tiene colacion
       </label>
       {hasSnack ? (
-        <select className="rounded-xl border px-3 py-2 md:col-span-2" {...form.register("snackTypeId")}>
+        <select className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none md:col-span-2" {...form.register("snackTypeId")}>
           <option value="">Selecciona tipo de colacion</option>
           {snackTypes.map((snackType) => <option key={snackType.id} value={snackType.id}>{snackType.name}</option>)}
         </select>
       ) : null}
-      <input className="rounded-xl border px-3 py-2" type="date" {...form.register("hireDate")} />
-      <input className="rounded-xl border px-3 py-2" type="date" {...form.register("shiftStartDate")} />
-      <button disabled={isPending} className="rounded-xl bg-zinc-900 px-4 py-2 text-white md:col-span-2">
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" type="date" {...form.register("hireDate")} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" type="date" {...form.register("shiftStartDate")} />
+      <button disabled={isPending} className="rounded-xl bg-[var(--wf-red)] px-4 py-2 text-white transition hover:bg-[var(--wf-red-dark)] md:col-span-2">
         {isPending ? "Guardando..." : mode === "create" ? "Crear trabajador" : "Actualizar trabajador"}
       </button>
       <FormError message={message} />
@@ -343,15 +343,15 @@ export function ShiftCrudForm({ clientId }: { clientId: string }) {
   return (
     <form className="grid gap-3 md:grid-cols-2" onSubmit={onSubmit}>
       <input type="hidden" {...form.register("clientId")} />
-      <input className="rounded-xl border px-3 py-2" placeholder="Nombre turno" {...form.register("name")} />
-      <input className="rounded-xl border px-3 py-2" placeholder="Codigo" {...form.register("code")} />
-      <select className="rounded-xl border px-3 py-2" {...form.register("type")}>
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Nombre turno" {...form.register("name")} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Codigo" {...form.register("code")} />
+      <select className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" {...form.register("type")}>
         {Object.values(ShiftType).map((shiftType) => <option key={shiftType} value={shiftType}>{shiftType}</option>)}
       </select>
-      <input className="rounded-xl border px-3 py-2" type="number" placeholder="Cycle length" {...form.register("cycleLength", { setValueAs: (value) => value === "" ? null : Number(value) })} />
-      <textarea className="rounded-xl border px-3 py-2 md:col-span-2" rows={5} placeholder={suggestedJson} {...form.register("activeDaysRaw")} />
-      <input className="rounded-xl border px-3 py-2 md:col-span-2" placeholder="Descripcion" {...form.register("description")} />
-      <button disabled={isPending} className="rounded-xl bg-zinc-900 px-4 py-2 text-white md:col-span-2">
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" type="number" placeholder="Cycle length" {...form.register("cycleLength", { setValueAs: (value) => value === "" ? null : Number(value) })} />
+      <textarea className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none md:col-span-2" rows={5} placeholder={suggestedJson} {...form.register("activeDaysRaw")} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none md:col-span-2" placeholder="Descripcion" {...form.register("description")} />
+      <button disabled={isPending} className="rounded-xl bg-[var(--wf-red)] px-4 py-2 text-white transition hover:bg-[var(--wf-red-dark)] md:col-span-2">
         {isPending ? "Guardando..." : "Crear turno"}
       </button>
       <FormError message={message} />
@@ -384,9 +384,9 @@ export function SnackTypeCrudForm({ clientId }: { clientId: string }) {
   return (
     <form className="grid gap-3 md:grid-cols-2" onSubmit={onSubmit}>
       <input type="hidden" {...form.register("clientId")} />
-      <input className="rounded-xl border px-3 py-2" placeholder="Codigo" {...form.register("code")} />
-      <input className="rounded-xl border px-3 py-2" placeholder="Nombre" {...form.register("name")} />
-      <button disabled={isPending} className="rounded-xl bg-zinc-900 px-4 py-2 text-white md:col-span-2">
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Codigo" {...form.register("code")} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Nombre" {...form.register("name")} />
+      <button disabled={isPending} className="rounded-xl bg-[var(--wf-red)] px-4 py-2 text-white transition hover:bg-[var(--wf-red-dark)] md:col-span-2">
         {isPending ? "Guardando..." : "Crear tipo de colacion"}
       </button>
       <FormError message={message} />
@@ -472,10 +472,10 @@ export function WeeklyMenuForm({ clientId, selectionCloseDay, selectionCloseHour
     <form className="grid gap-3" onSubmit={onSubmit}>
       <div className="grid gap-3 md:grid-cols-2">
         <input type="hidden" {...form.register("clientId")} />
-        <input className="rounded-xl border px-3 py-2" placeholder="Nombre menu" {...form.register("name")} />
-        <input className="rounded-xl border px-3 py-2" type="date" {...form.register("weekStartDate")} />
-        <input className="rounded-xl border px-3 py-2" type="number" placeholder="Dia cierre" {...form.register("selectionCloseDay", { valueAsNumber: true })} />
-        <input className="rounded-xl border px-3 py-2" type="number" placeholder="Hora cierre" {...form.register("selectionCloseHour", { valueAsNumber: true })} />
+        <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Nombre menu" {...form.register("name")} />
+        <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" type="date" {...form.register("weekStartDate")} />
+        <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" type="number" placeholder="Dia cierre" {...form.register("selectionCloseDay", { valueAsNumber: true })} />
+        <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" type="number" placeholder="Hora cierre" {...form.register("selectionCloseHour", { valueAsNumber: true })} />
       </div>
       {[
         ["monday", "Lunes"],
@@ -484,17 +484,17 @@ export function WeeklyMenuForm({ clientId, selectionCloseDay, selectionCloseHour
         ["thursday", "Jueves"],
         ["friday", "Viernes"],
       ].map(([prefix, label]) => (
-        <div key={prefix} className="rounded-2xl border border-zinc-200 p-4">
+        <div key={prefix} className="rounded-2xl border border-[var(--wf-border)] bg-[var(--wf-gray-soft)]/50 p-4">
           <p className="mb-3 text-sm font-semibold text-zinc-800">{label}</p>
           <div className="grid gap-3 md:grid-cols-2">
-            <input className="rounded-xl border px-3 py-2" placeholder="Fondo A" {...form.register(`${prefix}MainA` as keyof MenuValues)} />
-            <input className="rounded-xl border px-3 py-2" placeholder="Fondo B" {...form.register(`${prefix}MainB` as keyof MenuValues)} />
-            <input className="rounded-xl border px-3 py-2" placeholder="Postre A" {...form.register(`${prefix}DessertA` as keyof MenuValues)} />
-            <input className="rounded-xl border px-3 py-2" placeholder="Postre B" {...form.register(`${prefix}DessertB` as keyof MenuValues)} />
+            <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Fondo A" {...form.register(`${prefix}MainA` as keyof MenuValues)} />
+            <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Fondo B" {...form.register(`${prefix}MainB` as keyof MenuValues)} />
+            <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Postre A" {...form.register(`${prefix}DessertA` as keyof MenuValues)} />
+            <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Postre B" {...form.register(`${prefix}DessertB` as keyof MenuValues)} />
           </div>
         </div>
       ))}
-      <button disabled={isPending} className="rounded-xl bg-zinc-900 px-4 py-2 text-white">
+      <button disabled={isPending} className="rounded-xl bg-[var(--wf-red)] px-4 py-2 text-white transition hover:bg-[var(--wf-red-dark)]">
         {isPending ? "Guardando..." : "Crear menu semanal"}
       </button>
       <FormError message={message} />
@@ -529,12 +529,12 @@ export function ContractCrudForm({ clientId }: { clientId: string }) {
   return (
     <form className="grid gap-3 md:grid-cols-2" onSubmit={onSubmit}>
       <input type="hidden" {...form.register("clientId")} />
-      <input className="rounded-xl border px-3 py-2" placeholder="Nombre contrato" {...form.register("name")} />
-      <input className="rounded-xl border px-3 py-2" placeholder="Codigo" {...form.register("code")} />
-      <input className="rounded-xl border px-3 py-2" type="date" {...form.register("startDate")} />
-      <input className="rounded-xl border px-3 py-2" type="date" {...form.register("endDate")} />
-      <label className="flex items-center gap-2 rounded-xl border px-3 py-2 md:col-span-2"><input type="checkbox" {...form.register("active")} />Contrato activo</label>
-      <button disabled={isPending} className="rounded-xl bg-zinc-900 px-4 py-2 text-white md:col-span-2">{isPending ? "Guardando..." : "Crear contrato"}</button>
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Nombre contrato" {...form.register("name")} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Codigo" {...form.register("code")} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" type="date" {...form.register("startDate")} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" type="date" {...form.register("endDate")} />
+      <label className="flex items-center gap-2 rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none md:col-span-2"><input type="checkbox" {...form.register("active")} />Contrato activo</label>
+      <button disabled={isPending} className="rounded-xl bg-[var(--wf-red)] px-4 py-2 text-white transition hover:bg-[var(--wf-red-dark)] md:col-span-2">{isPending ? "Guardando..." : "Crear contrato"}</button>
       <FormError message={message} />
     </form>
   );
@@ -565,15 +565,15 @@ export function WorksiteCrudForm({ clientId, contracts }: { clientId: string; co
   return (
     <form className="grid gap-3 md:grid-cols-2" onSubmit={onSubmit}>
       <input type="hidden" {...form.register("clientId")} />
-      <select className="rounded-xl border px-3 py-2" {...form.register("contractId")}>
+      <select className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" {...form.register("contractId")}>
         <option value="">Sin contrato</option>
         {contracts.map((contract) => <option key={contract.id} value={contract.id}>{contract.name}</option>)}
       </select>
-      <input className="rounded-xl border px-3 py-2" placeholder="Nombre faena" {...form.register("name")} />
-      <input className="rounded-xl border px-3 py-2" placeholder="Codigo" {...form.register("code")} />
-      <input className="rounded-xl border px-3 py-2" placeholder="Ubicacion" {...form.register("location")} />
-      <label className="flex items-center gap-2 rounded-xl border px-3 py-2 md:col-span-2"><input type="checkbox" {...form.register("active")} />Faena activa</label>
-      <button disabled={isPending} className="rounded-xl bg-zinc-900 px-4 py-2 text-white md:col-span-2">{isPending ? "Guardando..." : "Crear faena"}</button>
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Nombre faena" {...form.register("name")} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Codigo" {...form.register("code")} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Ubicacion" {...form.register("location")} />
+      <label className="flex items-center gap-2 rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none md:col-span-2"><input type="checkbox" {...form.register("active")} />Faena activa</label>
+      <button disabled={isPending} className="rounded-xl bg-[var(--wf-red)] px-4 py-2 text-white transition hover:bg-[var(--wf-red-dark)] md:col-span-2">{isPending ? "Guardando..." : "Crear faena"}</button>
       <FormError message={message} />
     </form>
   );
@@ -604,14 +604,14 @@ export function CostCenterCrudForm({ clientId, contracts }: { clientId: string; 
   return (
     <form className="grid gap-3 md:grid-cols-2" onSubmit={onSubmit}>
       <input type="hidden" {...form.register("clientId")} />
-      <select className="rounded-xl border px-3 py-2" {...form.register("contractId")}>
+      <select className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" {...form.register("contractId")}>
         <option value="">Sin contrato</option>
         {contracts.map((contract) => <option key={contract.id} value={contract.id}>{contract.name}</option>)}
       </select>
-      <input className="rounded-xl border px-3 py-2" placeholder="Nombre centro de costo" {...form.register("name")} />
-      <input className="rounded-xl border px-3 py-2" placeholder="Codigo" {...form.register("code")} />
-      <label className="flex items-center gap-2 rounded-xl border px-3 py-2 md:col-span-2"><input type="checkbox" {...form.register("active")} />Centro de costo activo</label>
-      <button disabled={isPending} className="rounded-xl bg-zinc-900 px-4 py-2 text-white md:col-span-2">{isPending ? "Guardando..." : "Crear centro de costo"}</button>
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Nombre centro de costo" {...form.register("name")} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Codigo" {...form.register("code")} />
+      <label className="flex items-center gap-2 rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none md:col-span-2"><input type="checkbox" {...form.register("active")} />Centro de costo activo</label>
+      <button disabled={isPending} className="rounded-xl bg-[var(--wf-red)] px-4 py-2 text-white transition hover:bg-[var(--wf-red-dark)] md:col-span-2">{isPending ? "Guardando..." : "Crear centro de costo"}</button>
       <FormError message={message} />
     </form>
   );
@@ -642,15 +642,15 @@ export function TotemCrudForm({ clientId, worksites }: { clientId: string; works
   return (
     <form className="grid gap-3 md:grid-cols-2" onSubmit={onSubmit}>
       <input type="hidden" {...form.register("clientId")} />
-      <select className="rounded-xl border px-3 py-2" {...form.register("worksiteId")}>
+      <select className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" {...form.register("worksiteId")}>
         <option value="">Sin faena</option>
         {worksites.map((worksite) => <option key={worksite.id} value={worksite.id}>{worksite.name}</option>)}
       </select>
-      <input className="rounded-xl border px-3 py-2" placeholder="Codigo dispositivo" {...form.register("code")} />
-      <input className="rounded-xl border px-3 py-2" placeholder="Nombre totem" {...form.register("name")} />
-      <input className="rounded-xl border px-3 py-2 md:col-span-2" placeholder="Ubicacion / descripcion" {...form.register("locationDescription")} />
-      <label className="flex items-center gap-2 rounded-xl border px-3 py-2 md:col-span-2"><input type="checkbox" {...form.register("active")} />Totem activo</label>
-      <button disabled={isPending} className="rounded-xl bg-zinc-900 px-4 py-2 text-white md:col-span-2">{isPending ? "Guardando..." : "Crear totem"}</button>
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Codigo dispositivo" {...form.register("code")} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" placeholder="Nombre totem" {...form.register("name")} />
+      <input className="rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none md:col-span-2" placeholder="Ubicacion / descripcion" {...form.register("locationDescription")} />
+      <label className="flex items-center gap-2 rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none md:col-span-2"><input type="checkbox" {...form.register("active")} />Totem activo</label>
+      <button disabled={isPending} className="rounded-xl bg-[var(--wf-red)] px-4 py-2 text-white transition hover:bg-[var(--wf-red-dark)] md:col-span-2">{isPending ? "Guardando..." : "Crear totem"}</button>
       <FormError message={message} />
     </form>
   );

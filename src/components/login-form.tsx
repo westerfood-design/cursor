@@ -12,10 +12,7 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
 
   const onSubmit = form.handleSubmit(async (values) => {
@@ -37,15 +34,15 @@ export function LoginForm() {
   return (
     <form onSubmit={onSubmit} className="grid gap-4">
       <div>
-        <label className="mb-1 block text-sm font-medium text-zinc-700">Correo</label>
-        <input className="w-full rounded-xl border border-zinc-300 px-3 py-2" {...form.register("email")} />
+        <label className="mb-1 block text-sm font-medium text-[var(--wf-gray-dark)]">Correo</label>
+        <input className="w-full rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" {...form.register("email")} />
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium text-zinc-700">Contrasena</label>
-        <input type="password" className="w-full rounded-xl border border-zinc-300 px-3 py-2" {...form.register("password")} />
+        <label className="mb-1 block text-sm font-medium text-[var(--wf-gray-dark)]">Contrasena</label>
+        <input type="password" className="w-full rounded-xl border border-[var(--wf-border)] px-3 py-2 focus:border-[var(--wf-red)] focus:outline-none" {...form.register("password")} />
       </div>
-      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
-      <button className="rounded-xl bg-zinc-900 px-4 py-2 text-white" disabled={loading}>
+      {error ? <p className="text-sm text-[var(--wf-red-dark)]">{error}</p> : null}
+      <button className="rounded-xl bg-[var(--wf-red)] px-4 py-2 text-white transition hover:bg-[var(--wf-red-dark)]" disabled={loading}>
         {loading ? "Ingresando..." : "Ingresar"}
       </button>
     </form>

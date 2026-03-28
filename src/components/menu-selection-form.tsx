@@ -3,19 +3,9 @@
 import { ServiceType } from "@prisma/client";
 import { useState, useTransition } from "react";
 
-export function MenuSelectionForm({
-  employeeId,
-  menuDay,
-  serviceType = ServiceType.LUNCH,
-  defaultMainCourseOptionId,
-  defaultDessertOptionId,
-}: {
+export function MenuSelectionForm({ employeeId, menuDay, serviceType = ServiceType.LUNCH, defaultMainCourseOptionId, defaultDessertOptionId }: {
   employeeId: string;
-  menuDay: {
-    id: string;
-    mainCourseOptions: Array<{ id: string; name: string }>;
-    dessertOptions: Array<{ id: string; name: string }>;
-  };
+  menuDay: { id: string; mainCourseOptions: Array<{ id: string; name: string }>; dessertOptions: Array<{ id: string; name: string }> };
   serviceType?: ServiceType;
   defaultMainCourseOptionId?: string;
   defaultDessertOptionId?: string;
@@ -46,29 +36,27 @@ export function MenuSelectionForm({
   return (
     <div className="grid gap-3">
       <div>
-        <p className="mb-2 text-sm font-medium text-zinc-700">Fondo</p>
+        <p className="mb-2 text-sm font-medium text-[var(--wf-gray-dark)]">Fondo</p>
         <div className="grid gap-2 md:grid-cols-2">
           {menuDay.mainCourseOptions.map((option) => (
-            <button key={option.id} type="button" onClick={() => setMainCourseOptionId(option.id)} className={`rounded-xl border px-4 py-3 text-left ${mainCourseOptionId === option.id ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 bg-white text-zinc-800"}`}>
+            <button key={option.id} type="button" onClick={() => setMainCourseOptionId(option.id)} className={`rounded-xl border px-4 py-3 text-left transition ${mainCourseOptionId === option.id ? "border-[var(--wf-red)] bg-[var(--wf-red)] text-white" : "border-[var(--wf-border)] bg-white text-[var(--wf-gray-dark)] hover:bg-[var(--wf-red-soft)]"}`}>
               {option.name}
             </button>
           ))}
         </div>
       </div>
       <div>
-        <p className="mb-2 text-sm font-medium text-zinc-700">Postre</p>
+        <p className="mb-2 text-sm font-medium text-[var(--wf-gray-dark)]">Postre</p>
         <div className="grid gap-2 md:grid-cols-2">
           {menuDay.dessertOptions.map((option) => (
-            <button key={option.id} type="button" onClick={() => setDessertOptionId(option.id)} className={`rounded-xl border px-4 py-3 text-left ${dessertOptionId === option.id ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 bg-white text-zinc-800"}`}>
+            <button key={option.id} type="button" onClick={() => setDessertOptionId(option.id)} className={`rounded-xl border px-4 py-3 text-left transition ${dessertOptionId === option.id ? "border-[var(--wf-red)] bg-[var(--wf-red)] text-white" : "border-[var(--wf-border)] bg-white text-[var(--wf-gray-dark)] hover:bg-[var(--wf-red-soft)]"}`}>
               {option.name}
             </button>
           ))}
         </div>
       </div>
-      <button type="button" onClick={submitSelection} disabled={isPending} className="rounded-xl bg-zinc-900 px-4 py-2 text-white">
-        {isPending ? "Guardando..." : "Guardar seleccion"}
-      </button>
-      {message ? <p className="text-sm text-zinc-600">{message}</p> : null}
+      <button type="button" onClick={submitSelection} disabled={isPending} className="rounded-xl bg-[var(--wf-red)] px-4 py-2 text-white transition hover:bg-[var(--wf-red-dark)]">{isPending ? "Guardando..." : "Guardar seleccion"}</button>
+      {message ? <p className="text-sm text-[var(--wf-gray)]">{message}</p> : null}
     </div>
   );
 }

@@ -34,8 +34,8 @@ export default async function ReportsPage() {
         description="Descarga base operativa y base de estado de pago en CSV para analisis quincenal o mensual."
         actions={
           <div className="flex flex-col gap-2 md:flex-row">
-            <a className="rounded-xl bg-zinc-900 px-4 py-2 text-sm text-white" href={`/api/reports/export?type=consumption&from=${fromStr}&to=${toStr}`}>Exportar consumo CSV</a>
-            <a className="rounded-xl bg-emerald-600 px-4 py-2 text-sm text-white" href={`/api/reports/export?type=payment-base&from=${fromStr}&to=${toStr}`}>Exportar base de pago CSV</a>
+            <a className="rounded-xl bg-[var(--wf-red)] px-4 py-2 text-sm text-white transition hover:bg-[var(--wf-red-dark)]" href={`/api/reports/export?type=consumption&from=${fromStr}&to=${toStr}`}>Exportar consumo CSV</a>
+            <a className="rounded-xl bg-[var(--wf-gray-dark)] px-4 py-2 text-sm text-white transition hover:bg-[var(--wf-gray)]" href={`/api/reports/export?type=payment-base&from=${fromStr}&to=${toStr}`}>Exportar base de pago CSV</a>
           </div>
         }
       >
