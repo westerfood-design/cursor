@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 const linksByRole: Record<RoleCode, Array<{ href: string; label: string }>> = {
   WESTERFOOD_ADMIN: [
     { href: "/admin/clients", label: "Clientes" },
-    { href: "/admin/operations", label: "Operacion" },
+    { href: "/admin/operations", label: "Turnos y colacion" },
     { href: "/menus", label: "Menus" },
     { href: "/reports", label: "Reportes" },
   ],

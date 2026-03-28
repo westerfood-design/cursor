@@ -30,7 +30,10 @@ export async function GET() {
   const clientId = session.user.roleCode === RoleCode.WESTERFOOD_ADMIN ? undefined : session.user.clientId ?? undefined;
   const menus = await prisma.menu.findMany({
     where: clientId ? { clientId } : undefined,
-    include: { days: { include: { mainCourseOptions: true, dessertOptions: true } } },
+    include: {
+      client: true,
+      days: { include: { mainCourseOptions: true, dessertOptions: true, selections: true }, orderBy: { serviceDate: "asc" } },
+    },
     orderBy: { weekStartDate: "desc" },
   });
   return jsonOk({ menus });
@@ -48,7 +51,7 @@ export async function POST(request: Request) {
       return jsonError("No autorizado para este cliente.", 403);
     }
 
-    const weekStartDate = payload.weekStartDate ? new Date(payload.weekStartDate) : startOfWeek(new Date(), { weekStartsOn: 1 });
+    const weekStartDate = payload.weekStartDate ? startOfWeek(new Date(payload.weekStartDate), { weekStartsOn: 1 }) : startOfWeek(new Date(), { weekStartsOn: 1 });
     const menu = await prisma.menu.create({
       data: {
         clientId: payload.clientId,
@@ -62,12 +65,8 @@ export async function POST(request: Request) {
           create: payload.days.map((day) => ({
             serviceDate: new Date(day.serviceDate),
             notes: day.notes,
-            mainCourseOptions: {
-              create: day.mainCourses,
-            },
-            dessertOptions: {
-              create: day.desserts,
-            },
+            mainCourseOptions: { create: day.mainCourses },
+            dessertOptions: { create: day.desserts },
           })),
         },
       },

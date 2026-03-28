@@ -9,6 +9,7 @@ const schema = z.object({
   name: z.string().min(2).optional(),
   legalName: z.string().min(2).optional(),
   taxId: z.string().min(7).optional(),
+  timezone: z.string().min(3).optional(),
   active: z.boolean().optional(),
   selectionCloseDay: z.number().min(0).max(6).optional(),
   selectionCloseHour: z.number().min(0).max(23).optional(),

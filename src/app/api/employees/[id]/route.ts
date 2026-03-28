@@ -6,10 +6,15 @@ import { jsonError, jsonOk } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
 
 const schema = z.object({
-  active: z.boolean().optional(),
+  firstName: z.string().min(2).optional(),
+  lastName: z.string().min(2).optional(),
+  email: z.string().optional(),
   shiftId: z.string().optional(),
+  active: z.boolean().optional(),
   hasSnack: z.boolean().optional(),
   snackTypeId: z.string().nullable().optional(),
+  hireDate: z.string().optional(),
+  shiftStartDate: z.string().optional(),
 });
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -26,7 +31,27 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (session.user.roleCode === RoleCode.CLIENT_HR && employee.clientId !== session.user.clientId) {
       return jsonError("No autorizado para este trabajador.", 403);
     }
-    const updated = await prisma.employee.update({ where: { id }, data: payload });
+
+    if (payload.hasSnack === true && !payload.snackTypeId && !employee.snackTypeId) {
+      return jsonError("snackType es obligatorio cuando hasSnack=true.", 400);
+    }
+
+    const updated = await prisma.employee.update({
+      where: { id },
+      data: {
+        ...payload,
+        snackTypeId: payload.hasSnack === false ? null : payload.snackTypeId,
+        hireDate: payload.hireDate ? new Date(payload.hireDate) : undefined,
+        shiftStartDate: payload.shiftStartDate ? new Date(payload.shiftStartDate) : undefined,
+      },
+      include: {
+        shift: true,
+        snackType: true,
+        contract: true,
+        worksite: true,
+        costCenter: true,
+      },
+    });
     return jsonOk({ employee: updated });
   } catch (error) {
     return jsonError("No fue posible actualizar el trabajador.", 400, error);

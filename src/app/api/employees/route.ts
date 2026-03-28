@@ -16,8 +16,8 @@ const schema = z.object({
   contractId: z.string().optional(),
   worksiteId: z.string().optional(),
   costCenterId: z.string().optional(),
-  active: z.boolean().default(true),
-  hasSnack: z.boolean().default(false),
+  active: z.boolean(),
+  hasSnack: z.boolean(),
   snackTypeId: z.string().optional(),
   hireDate: z.string().min(1),
   shiftStartDate: z.string().min(1),
@@ -28,9 +28,18 @@ export async function GET() {
   if (session.user.roleCode !== RoleCode.WESTERFOOD_ADMIN && session.user.roleCode !== RoleCode.CLIENT_HR) {
     return jsonError("No autorizado.", 403);
   }
+
   const clientId = session.user.roleCode === RoleCode.WESTERFOOD_ADMIN ? undefined : session.user.clientId ?? undefined;
   const employees = await prisma.employee.findMany({
     where: clientId ? { clientId } : undefined,
+    include: {
+      shift: true,
+      snackType: true,
+      contract: true,
+      worksite: true,
+      costCenter: true,
+      client: true,
+    },
     orderBy: [{ active: "desc" }, { lastName: "asc" }],
   });
   return jsonOk({ employees });
@@ -47,17 +56,17 @@ export async function POST(request: Request) {
     if (session.user.roleCode === RoleCode.CLIENT_HR && session.user.clientId !== payload.clientId) {
       return jsonError("No puedes crear trabajadores fuera de tu tenant.", 403);
     }
-
     if (payload.hasSnack && !payload.snackTypeId) {
       return jsonError("snackType es obligatorio cuando hasSnack=true.", 400);
     }
 
+    const normalizedRut = normalizeRut(payload.rut);
     const employee = await prisma.employee.create({
       data: {
         clientId: payload.clientId,
         firstName: payload.firstName,
         lastName: payload.lastName,
-        rut: normalizeRut(payload.rut),
+        rut: normalizedRut,
         email: payload.email || null,
         shiftId: payload.shiftId,
         contractId: payload.contractId || null,
@@ -68,7 +77,11 @@ export async function POST(request: Request) {
         snackTypeId: payload.hasSnack ? payload.snackTypeId || null : null,
         hireDate: new Date(payload.hireDate),
         shiftStartDate: new Date(payload.shiftStartDate),
+        identifiers: {
+          create: [{ clientId: payload.clientId, type: "RUT", value: normalizedRut, isPrimary: true }],
+        },
       },
+      include: { shift: true, snackType: true },
     });
     return jsonOk({ employee }, 201);
   } catch (error) {

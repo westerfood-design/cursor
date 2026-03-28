@@ -1,7 +1,7 @@
 import { RoleCode } from "@prisma/client";
 
 import { requireRole } from "@/auth";
-import { ClientForm } from "@/components/forms";
+import { ClientCrudForm } from "@/components/crud-forms";
 import { DataTable, PageShell, SectionCard, StatCard } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 
@@ -9,13 +9,7 @@ export default async function AdminClientsPage() {
   await requireRole([RoleCode.WESTERFOOD_ADMIN]);
   const clients = await prisma.client.findMany({
     include: {
-      _count: {
-        select: {
-          employees: true,
-          menus: true,
-          totemDevices: true,
-        },
-      },
+      _count: { select: { employees: true, menus: true, totemDevices: true } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -27,27 +21,45 @@ export default async function AdminClientsPage() {
         <StatCard label="Menus publicados" value={clients.reduce((sum, client) => sum + client._count.menus, 0)} />
         <StatCard label="Totems registrados" value={clients.reduce((sum, client) => sum + client._count.totemDevices, 0)} />
       </div>
-      <SectionCard title="Resumen ejecutivo" description="WesterFood centraliza clientes, contratos, menus, turnos, tickets y consumo con un modelo multi-tenant por clientId.">
-        <div className="grid gap-3 text-sm text-zinc-700 md:grid-cols-2">
-          <p><strong>Arquitectura recomendada:</strong> Next.js App Router, Prisma, PostgreSQL, auth por credenciales y servicios de dominio por modulo.</p>
-          <p><strong>Alcance MVP:</strong> login por rol, CRUD de clientes y trabajadores, menús semanales, selección diaria, tótem, ticket único y reportes base.</p>
-          <p><strong>Estructura propuesta:</strong> <code>src/app</code> para rutas, <code>src/modules</code> para negocio, <code>src/lib</code> para infraestructura, <code>prisma</code> para datos.</p>
-          <p><strong>Roadmap técnico:</strong> 1) fundación y auth, 2) maestro de clientes y trabajadores, 3) menú y selección, 4) tickets/tótem, 5) reportes y estado de pago base.</p>
+      <SectionCard title="Crear cliente" description="Alta de tenant con timezone, cierre operativo y configuracion base.">
+        <ClientCrudForm mode="create" />
+      </SectionCard>
+      <SectionCard title="Clientes registrados" description="Edicion directa de tenants y de sus reglas base de operacion.">
+        <div className="grid gap-4">
+          {clients.map((client) => (
+            <div key={client.id} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+              <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-zinc-900">{client.name}</h3>
+                  <p className="text-sm text-zinc-500">{client.legalName} · {client.slug}</p>
+                </div>
+                <p className="text-sm text-zinc-500">Trabajadores: {client._count.employees} · Totems: {client._count.totemDevices}</p>
+              </div>
+              <ClientCrudForm
+                mode="edit"
+                defaultValues={{
+                  id: client.id,
+                  name: client.name,
+                  slug: client.slug,
+                  legalName: client.legalName,
+                  taxId: client.taxId,
+                  timezone: client.timezone,
+                  selectionCloseDay: client.selectionCloseDay,
+                  selectionCloseHour: client.selectionCloseHour,
+                  active: client.active,
+                }}
+              />
+            </div>
+          ))}
         </div>
       </SectionCard>
-      <SectionCard title="Crear cliente" description="Alta de tenant con reglas de cierre de selección configurables.">
-        <ClientForm />
-      </SectionCard>
-      <SectionCard title="Clientes registrados" description="Cada cliente tiene aislamiento lógico por tenant y configuración operativa propia.">
+      <SectionCard title="Vista tabular" description="Resumen rapido multiempresa para gestion administrativa.">
         <DataTable
-          columns={["Cliente", "Slug", "RUT empresa", "Cierre", "Trabajadores", "Tótems"]}
+          columns={["Cliente", "Slug", "Timezone", "Cierre", "Trabajadores", "Totems"]}
           rows={clients.map((client) => [
-            <div key={client.id}>
-              <p className="font-medium text-zinc-900">{client.name}</p>
-              <p className="text-xs text-zinc-500">{client.legalName}</p>
-            </div>,
+            client.name,
             client.slug,
-            client.taxId,
+            client.timezone,
             `Dia ${client.selectionCloseDay} / ${client.selectionCloseHour}:00`,
             String(client._count.employees),
             String(client._count.totemDevices),

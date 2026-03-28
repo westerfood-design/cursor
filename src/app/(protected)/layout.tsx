@@ -12,10 +12,11 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
       <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[260px_1fr]">
         <AppSidebar roleCode={session.user.roleCode} />
         <div className="space-y-4">
-          <header className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm">
+          <header className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm text-zinc-500">Sesión activa</p>
+              <p className="text-sm text-zinc-500">Sesion activa</p>
               <h1 className="text-lg font-semibold text-zinc-900">{session.user.name}</h1>
+              <p className="text-sm text-zinc-500">Rol: {session.user.roleCode}</p>
             </div>
             <SignOutButton />
           </header>
