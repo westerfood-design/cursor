@@ -1,0 +1,426 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleCode {
+  WESTERFOOD_ADMIN
+  CLIENT_HR
+  EMPLOYEE
+}
+
+enum ShiftType {
+  FIXED_MONDAY_TO_FRIDAY
+  CYCLICAL
+  CUSTOM
+}
+
+enum MenuStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+enum TicketStatus {
+  PENDING
+  ISSUED
+  VALIDATED
+  CONSUMED
+  REJECTED
+  CANCELLED
+}
+
+enum TicketLogAction {
+  LOOKUP
+  ISSUE
+  VALIDATE
+  CONSUME
+  REJECT
+  DUPLICATE_ATTEMPT
+  NOT_ALLOWED
+}
+
+enum IdentifierType {
+  RUT
+  INTERNAL_CODE
+  BADGE
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  code        RoleCode @unique
+  name        String
+  description String?
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  active       Boolean   @default(true)
+  roleId       String
+  role         Role      @relation(fields: [roleId], references: [id])
+  clientId     String?
+  client       Client?   @relation(fields: [clientId], references: [id])
+  employeeId   String?   @unique
+  employee     Employee? @relation(fields: [employeeId], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([clientId])
+}
+
+model Client {
+  id                  String                   @id @default(cuid())
+  name                String
+  slug                String                   @unique
+  legalName           String
+  taxId               String                   @unique
+  active              Boolean                  @default(true)
+  selectionCloseDay   Int                      @default(4)
+  selectionCloseHour  Int                      @default(17)
+  users               User[]
+  contracts           Contract[]
+  worksites           Worksite[]
+  costCenters         CostCenter[]
+  employees           Employee[]
+  menus               Menu[]
+  menuSelections      MenuSelection[]
+  snackTypes          SnackType[]
+  shifts              Shift[]
+  assignments         DailyServiceAssignment[]
+  tickets             ConsumptionTicket[]
+  ticketLogs          TicketValidationLog[]
+  totemDevices        TotemDevice[]
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+
+  @@index([slug])
+}
+
+model Contract {
+  id          String     @id @default(cuid())
+  clientId    String
+  client      Client     @relation(fields: [clientId], references: [id])
+  name        String
+  code        String
+  startDate   DateTime
+  endDate     DateTime?
+  active      Boolean    @default(true)
+  worksites   Worksite[]
+  costCenters CostCenter[]
+  employees   Employee[]
+  assignments DailyServiceAssignment[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@unique([clientId, code])
+}
+
+model Worksite {
+  id            String                   @id @default(cuid())
+  clientId      String
+  client        Client                   @relation(fields: [clientId], references: [id])
+  contractId    String?
+  contract      Contract?                @relation(fields: [contractId], references: [id])
+  name          String
+  code          String
+  location      String?
+  active        Boolean                  @default(true)
+  employees     Employee[]
+  assignments   DailyServiceAssignment[]
+  totemDevices  TotemDevice[]
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+
+  @@unique([clientId, code])
+}
+
+model CostCenter {
+  id          String                   @id @default(cuid())
+  clientId    String
+  client      Client                   @relation(fields: [clientId], references: [id])
+  contractId  String?
+  contract    Contract?                @relation(fields: [contractId], references: [id])
+  code        String
+  name        String
+  active      Boolean                  @default(true)
+  employees   Employee[]
+  assignments DailyServiceAssignment[]
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+
+  @@unique([clientId, code])
+}
+
+model Shift {
+  id              String                   @id @default(cuid())
+  clientId        String?
+  client          Client?                  @relation(fields: [clientId], references: [id])
+  name            String
+  code            String
+  type            ShiftType
+  cycleLength     Int?
+  activeDays      Json
+  description     String?
+  active          Boolean                  @default(true)
+  employees       Employee[]
+  assignments     DailyServiceAssignment[]
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  @@unique([clientId, code])
+}
+
+model SnackType {
+  id          String                   @id @default(cuid())
+  clientId    String
+  client      Client                   @relation(fields: [clientId], references: [id])
+  code        String
+  name        String
+  active      Boolean                  @default(true)
+  employees   Employee[]
+  assignments DailyServiceAssignment[]
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+
+  @@unique([clientId, code])
+}
+
+model Employee {
+  id               String                   @id @default(cuid())
+  clientId         String
+  client           Client                   @relation(fields: [clientId], references: [id])
+  contractId       String?
+  contract         Contract?                @relation(fields: [contractId], references: [id])
+  worksiteId       String?
+  worksite         Worksite?                @relation(fields: [worksiteId], references: [id])
+  costCenterId     String?
+  costCenter       CostCenter?              @relation(fields: [costCenterId], references: [id])
+  shiftId          String
+  shift            Shift                    @relation(fields: [shiftId], references: [id])
+  user             User?
+  firstName        String
+  lastName         String
+  rut              String
+  email            String?
+  active           Boolean                  @default(true)
+  hireDate         DateTime
+  shiftStartDate   DateTime
+  hasSnack         Boolean                  @default(false)
+  snackTypeId      String?
+  snackType        SnackType?               @relation(fields: [snackTypeId], references: [id])
+  notes            String?
+  identifiers      EmployeeIdentifier[]
+  selections       MenuSelection[]
+  assignments      DailyServiceAssignment[]
+  tickets          ConsumptionTicket[]
+  ticketLogs       TicketValidationLog[]
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  @@unique([clientId, rut])
+  @@index([clientId, active])
+}
+
+model EmployeeIdentifier {
+  id          String         @id @default(cuid())
+  employeeId  String
+  employee    Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type        IdentifierType
+  value       String
+  isPrimary   Boolean        @default(false)
+  active      Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([type, value])
+}
+
+model Menu {
+  id                 String         @id @default(cuid())
+  clientId           String
+  client             Client         @relation(fields: [clientId], references: [id])
+  name               String
+  weekStartDate      DateTime
+  selectionCloseDay  Int
+  selectionCloseHour Int
+  status             MenuStatus     @default(DRAFT)
+  publishedAt        DateTime?
+  days               MenuDay[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@unique([clientId, weekStartDate])
+}
+
+model MenuDay {
+  id                  String             @id @default(cuid())
+  menuId              String
+  menu                Menu               @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  serviceDate         DateTime
+  notes               String?
+  mainCourseOptions   MainCourseOption[]
+  dessertOptions      DessertOption[]
+  selections          MenuSelection[]
+  assignments         DailyServiceAssignment[]
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@unique([menuId, serviceDate])
+}
+
+model MainCourseOption {
+  id          String          @id @default(cuid())
+  menuDayId   String
+  menuDay     MenuDay         @relation(fields: [menuDayId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  active      Boolean         @default(true)
+  selections  MenuSelection[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model DessertOption {
+  id          String          @id @default(cuid())
+  menuDayId   String
+  menuDay     MenuDay         @relation(fields: [menuDayId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  active      Boolean         @default(true)
+  selections  MenuSelection[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model MenuSelection {
+  id                 String                 @id @default(cuid())
+  clientId           String
+  client             Client                 @relation(fields: [clientId], references: [id])
+  employeeId         String
+  employee           Employee               @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  menuDayId          String
+  menuDay            MenuDay                @relation(fields: [menuDayId], references: [id], onDelete: Cascade)
+  serviceDate        DateTime
+  mainCourseOptionId String
+  mainCourseOption   MainCourseOption       @relation(fields: [mainCourseOptionId], references: [id])
+  dessertOptionId    String
+  dessertOption      DessertOption          @relation(fields: [dessertOptionId], references: [id])
+  selectedAt         DateTime               @default(now())
+  assignment         DailyServiceAssignment?
+  tickets            ConsumptionTicket[]
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@unique([employeeId, serviceDate])
+  @@index([clientId, serviceDate])
+}
+
+model DailyServiceAssignment {
+  id               String              @id @default(cuid())
+  clientId         String
+  client           Client              @relation(fields: [clientId], references: [id])
+  employeeId       String
+  employee         Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  contractId       String?
+  contract         Contract?           @relation(fields: [contractId], references: [id])
+  worksiteId       String?
+  worksite         Worksite?           @relation(fields: [worksiteId], references: [id])
+  costCenterId     String?
+  costCenter       CostCenter?         @relation(fields: [costCenterId], references: [id])
+  shiftId          String
+  shift            Shift               @relation(fields: [shiftId], references: [id])
+  menuDayId        String?
+  menuDay          MenuDay?            @relation(fields: [menuDayId], references: [id])
+  menuSelectionId  String?             @unique
+  menuSelection    MenuSelection?      @relation(fields: [menuSelectionId], references: [id])
+  serviceDate      DateTime
+  eligible         Boolean             @default(true)
+  hasSnack         Boolean             @default(false)
+  snackTypeId      String?
+  snackType        SnackType?          @relation(fields: [snackTypeId], references: [id])
+  closureApplied   Boolean             @default(false)
+  source           String              @default("SHIFT_RULE")
+  ticket           ConsumptionTicket?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  @@unique([employeeId, serviceDate])
+  @@index([clientId, serviceDate])
+}
+
+model ConsumptionTicket {
+  id             String                @id @default(cuid())
+  clientId       String
+  client         Client                @relation(fields: [clientId], references: [id])
+  employeeId     String
+  employee       Employee              @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  assignmentId   String                @unique
+  assignment     DailyServiceAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  selectionId    String?
+  selection      MenuSelection?        @relation(fields: [selectionId], references: [id])
+  serviceDate    DateTime
+  ticketCode     String                @unique
+  status         TicketStatus          @default(PENDING)
+  issuedAt       DateTime?
+  validatedAt    DateTime?
+  consumedAt     DateTime?
+  rejectedReason String?
+  totemDeviceId  String?
+  totemDevice    TotemDevice?          @relation(fields: [totemDeviceId], references: [id])
+  serviceSummary Json
+  logs           TicketValidationLog[]
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@unique([employeeId, serviceDate])
+  @@index([clientId, serviceDate, status])
+}
+
+model TicketValidationLog {
+  id             String           @id @default(cuid())
+  clientId       String?
+  client         Client?          @relation(fields: [clientId], references: [id])
+  employeeId     String?
+  employee       Employee?        @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  ticketId       String?
+  ticket         ConsumptionTicket? @relation(fields: [ticketId], references: [id], onDelete: SetNull)
+  totemDeviceId  String?
+  totemDevice    TotemDevice?     @relation(fields: [totemDeviceId], references: [id])
+  action         TicketLogAction
+  statusSnapshot TicketStatus?
+  reason         String?
+  payload        Json?
+  createdAt      DateTime         @default(now())
+
+  @@index([clientId, createdAt])
+}
+
+model TotemDevice {
+  id                  String                @id @default(cuid())
+  clientId            String
+  client              Client                @relation(fields: [clientId], references: [id])
+  worksiteId          String?
+  worksite            Worksite?             @relation(fields: [worksiteId], references: [id])
+  code                String
+  name                String
+  locationDescription String?
+  active              Boolean               @default(true)
+  lastSeenAt          DateTime?
+  tickets             ConsumptionTicket[]
+  logs                TicketValidationLog[]
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  @@unique([clientId, code])
+  @@index([clientId, active])
+}
