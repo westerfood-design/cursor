@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 
+import { BrandLogo } from "@/components/brand-logo";
+
 type TotemResult = {
   status: string;
   message: string;
@@ -73,8 +75,9 @@ export function TotemClient({ clientSlug, deviceCode }: { clientSlug: string; de
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-xl flex-col justify-center gap-6 px-6 py-10">
-      <div className="text-center">
-        <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">Totem WesterFood</p>
+      <div className="flex flex-col items-center text-center">
+        <BrandLogo className="h-16 w-[280px]" priority />
+        <p className="mt-4 text-sm uppercase tracking-[0.3em] text-zinc-500">Totem de autoatencion</p>
         <h1 className="mt-3 text-4xl font-semibold text-zinc-950">Validacion diaria</h1>
         <p className="mt-3 text-zinc-600">Ingresa tu RUT para revisar y validar tu servicio del dia.</p>
       </div>
