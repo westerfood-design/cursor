@@ -50,6 +50,13 @@ enum IdentifierType {
   BADGE
 }
 
+enum ServiceType {
+  LUNCH
+  SNACK
+  BREAKFAST
+  DINNER
+}
+
 model Role {
   id          String   @id @default(cuid())
   code        RoleCode @unique
@@ -85,6 +92,7 @@ model Client {
   legalName           String
   taxId               String                   @unique
   active              Boolean                  @default(true)
+  timezone            String                   @default("America/Santiago")
   selectionCloseDay   Int                      @default(4)
   selectionCloseHour  Int                      @default(17)
   users               User[]
@@ -92,6 +100,7 @@ model Client {
   worksites           Worksite[]
   costCenters         CostCenter[]
   employees           Employee[]
+  employeeIdentifiers EmployeeIdentifier[]
   menus               Menu[]
   menuSelections      MenuSelection[]
   snackTypes          SnackType[]
@@ -123,6 +132,7 @@ model Contract {
   updatedAt   DateTime   @updatedAt
 
   @@unique([clientId, code])
+  @@index([clientId, active])
 }
 
 model Worksite {
@@ -142,6 +152,7 @@ model Worksite {
   updatedAt     DateTime                 @updatedAt
 
   @@unique([clientId, code])
+  @@index([clientId, active])
 }
 
 model CostCenter {
@@ -159,6 +170,7 @@ model CostCenter {
   updatedAt   DateTime                 @updatedAt
 
   @@unique([clientId, code])
+  @@index([clientId, active])
 }
 
 model Shift {
@@ -178,6 +190,7 @@ model Shift {
   updatedAt       DateTime                 @updatedAt
 
   @@unique([clientId, code])
+  @@index([clientId, active])
 }
 
 model SnackType {
@@ -193,6 +206,7 @@ model SnackType {
   updatedAt   DateTime                 @updatedAt
 
   @@unique([clientId, code])
+  @@index([clientId, active])
 }
 
 model Employee {
@@ -233,7 +247,9 @@ model Employee {
 
 model EmployeeIdentifier {
   id          String         @id @default(cuid())
+  clientId     String
   employeeId  String
+  client       Client         @relation(fields: [clientId], references: [id])
   employee    Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   type        IdentifierType
   value       String
@@ -242,7 +258,8 @@ model EmployeeIdentifier {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
-  @@unique([type, value])
+  @@unique([clientId, type, value])
+  @@index([employeeId, active])
 }
 
 model Menu {
@@ -260,6 +277,7 @@ model Menu {
   updatedAt          DateTime       @updatedAt
 
   @@unique([clientId, weekStartDate])
+  @@index([clientId, status, weekStartDate])
 }
 
 model MenuDay {
@@ -276,6 +294,7 @@ model MenuDay {
   updatedAt           DateTime           @updatedAt
 
   @@unique([menuId, serviceDate])
+  @@index([serviceDate])
 }
 
 model MainCourseOption {
@@ -288,6 +307,8 @@ model MainCourseOption {
   selections  MenuSelection[]
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+
+  @@index([menuDayId, active])
 }
 
 model DessertOption {
@@ -300,6 +321,8 @@ model DessertOption {
   selections  MenuSelection[]
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+
+  @@index([menuDayId, active])
 }
 
 model MenuSelection {
@@ -311,6 +334,7 @@ model MenuSelection {
   menuDayId          String
   menuDay            MenuDay                @relation(fields: [menuDayId], references: [id], onDelete: Cascade)
   serviceDate        DateTime
+  serviceType        ServiceType            @default(LUNCH)
   mainCourseOptionId String
   mainCourseOption   MainCourseOption       @relation(fields: [mainCourseOptionId], references: [id])
   dessertOptionId    String
@@ -321,7 +345,7 @@ model MenuSelection {
   createdAt          DateTime               @default(now())
   updatedAt          DateTime               @updatedAt
 
-  @@unique([employeeId, serviceDate])
+  @@unique([employeeId, serviceDate, serviceType])
   @@index([clientId, serviceDate])
 }
 
@@ -344,6 +368,7 @@ model DailyServiceAssignment {
   menuSelectionId  String?             @unique
   menuSelection    MenuSelection?      @relation(fields: [menuSelectionId], references: [id])
   serviceDate      DateTime
+  serviceType      ServiceType         @default(LUNCH)
   eligible         Boolean             @default(true)
   hasSnack         Boolean             @default(false)
   snackTypeId      String?
@@ -354,8 +379,8 @@ model DailyServiceAssignment {
   createdAt        DateTime            @default(now())
   updatedAt        DateTime            @updatedAt
 
-  @@unique([employeeId, serviceDate])
-  @@index([clientId, serviceDate])
+  @@unique([employeeId, serviceDate, serviceType])
+  @@index([clientId, serviceDate, serviceType])
 }
 
 model ConsumptionTicket {
@@ -369,6 +394,7 @@ model ConsumptionTicket {
   selectionId    String?
   selection      MenuSelection?        @relation(fields: [selectionId], references: [id])
   serviceDate    DateTime
+  serviceType    ServiceType           @default(LUNCH)
   ticketCode     String                @unique
   status         TicketStatus          @default(PENDING)
   issuedAt       DateTime?
@@ -382,8 +408,8 @@ model ConsumptionTicket {
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
 
-  @@unique([employeeId, serviceDate])
-  @@index([clientId, serviceDate, status])
+  @@unique([employeeId, serviceDate, serviceType])
+  @@index([clientId, serviceDate, serviceType, status])
 }
 
 model TicketValidationLog {

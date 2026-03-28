@@ -1,4 +1,4 @@
-import { TicketLogAction, TicketStatus, type Prisma } from "@prisma/client";
+import { ServiceType, TicketLogAction, TicketStatus, type Prisma } from "@prisma/client";
 import { randomUUID } from "crypto";
 import { format } from "date-fns";
 
@@ -8,24 +8,10 @@ import { normalizeRut } from "@/lib/rut";
 import { isEmployeeScheduledForDate } from "@/modules/shifts/shift-service";
 
 const assignmentInclude = {
-  employee: {
-    include: {
-      shift: true,
-      snackType: true,
-      client: true,
-      contract: true,
-      worksite: true,
-      costCenter: true,
-    },
-  },
+  employee: { include: { shift: true, snackType: true, client: true, contract: true, worksite: true, costCenter: true } },
   shift: true,
   snackType: true,
-  menuSelection: {
-    include: {
-      mainCourseOption: true,
-      dessertOption: true,
-    },
-  },
+  menuSelection: { include: { mainCourseOption: true, dessertOption: true } },
   worksite: true,
   contract: true,
   costCenter: true,
@@ -38,6 +24,7 @@ function buildTicketSummary(assignment: AssignmentWithRelations) {
     employee: `${assignment.employee.firstName} ${assignment.employee.lastName}`,
     client: assignment.employee.client.name,
     date: assignment.serviceDate,
+    serviceType: assignment.serviceType,
     shift: assignment.shift.name,
     mainCourse: assignment.menuSelection?.mainCourseOption?.name ?? null,
     dessert: assignment.menuSelection?.dessertOption?.name ?? null,
@@ -73,53 +60,25 @@ async function writeLog(input: {
   });
 }
 
-export async function getOrCreateDailyAssignment(employeeId: string, serviceDate: Date | string) {
+export async function getOrCreateDailyAssignment(employeeId: string, serviceDate: Date | string, serviceType: ServiceType = ServiceType.LUNCH) {
   const normalizedDate = toDateOnly(serviceDate);
 
   const existing = await prisma.dailyServiceAssignment.findUnique({
-    where: {
-      employeeId_serviceDate: {
-        employeeId,
-        serviceDate: normalizedDate,
-      },
-    },
+    where: { employeeId_serviceDate_serviceType: { employeeId, serviceDate: normalizedDate, serviceType } },
     include: assignmentInclude,
   });
-
-  if (existing) {
-    return existing;
-  }
+  if (existing) return existing;
 
   const employee = await prisma.employee.findUnique({
     where: { id: employeeId },
-    include: {
-      client: true,
-      shift: true,
-      snackType: true,
-      contract: true,
-      worksite: true,
-      costCenter: true,
-    },
+    include: { client: true, shift: true, snackType: true, contract: true, worksite: true, costCenter: true },
   });
-
-  if (!employee || !employee.active) {
-    throw new Error("El trabajador no se encuentra activo.");
-  }
+  if (!employee || !employee.active) throw new Error("El trabajador no se encuentra activo.");
 
   const eligible = isEmployeeScheduledForDate(employee.shift, employee.shiftStartDate, normalizedDate);
-  const menuDay = await prisma.menuDay.findFirst({
-    where: {
-      menu: { clientId: employee.clientId },
-      serviceDate: normalizedDate,
-    },
-  });
+  const menuDay = await prisma.menuDay.findFirst({ where: { menu: { clientId: employee.clientId }, serviceDate: normalizedDate } });
   const selection = await prisma.menuSelection.findUnique({
-    where: {
-      employeeId_serviceDate: {
-        employeeId,
-        serviceDate: normalizedDate,
-      },
-    },
+    where: { employeeId_serviceDate_serviceType: { employeeId, serviceDate: normalizedDate, serviceType } },
   });
 
   return prisma.dailyServiceAssignment.create({
@@ -133,6 +92,7 @@ export async function getOrCreateDailyAssignment(employeeId: string, serviceDate
       menuDayId: menuDay?.id,
       menuSelectionId: selection?.id,
       serviceDate: normalizedDate,
+      serviceType,
       eligible,
       hasSnack: employee.hasSnack,
       snackTypeId: employee.snackTypeId,
@@ -146,25 +106,12 @@ export async function getOrCreateDailyAssignment(employeeId: string, serviceDate
 export async function getOrCreateTicketForAssignment(assignmentId: string, totemDeviceId?: string) {
   const existing = await prisma.consumptionTicket.findUnique({
     where: { assignmentId },
-    include: {
-      assignment: { include: assignmentInclude },
-      selection: { include: { mainCourseOption: true, dessertOption: true } },
-      totemDevice: true,
-    },
+    include: { assignment: { include: assignmentInclude }, selection: { include: { mainCourseOption: true, dessertOption: true } }, totemDevice: true },
   });
+  if (existing) return existing;
 
-  if (existing) {
-    return existing;
-  }
-
-  const assignment = await prisma.dailyServiceAssignment.findUnique({
-    where: { id: assignmentId },
-    include: assignmentInclude,
-  });
-
-  if (!assignment || !assignment.eligible) {
-    throw new Error("No existe servicio habilitado para esta asignacion.");
-  }
+  const assignment = await prisma.dailyServiceAssignment.findUnique({ where: { id: assignmentId }, include: assignmentInclude });
+  if (!assignment || !assignment.eligible) throw new Error("No existe servicio habilitado para esta asignacion.");
 
   const created = await prisma.consumptionTicket.create({
     data: {
@@ -173,212 +120,81 @@ export async function getOrCreateTicketForAssignment(assignmentId: string, totem
       assignmentId: assignment.id,
       selectionId: assignment.menuSelectionId,
       serviceDate: assignment.serviceDate,
+      serviceType: assignment.serviceType,
       ticketCode: `WF-${format(assignment.serviceDate, "yyyyMMdd")}-${randomUUID().slice(0, 8).toUpperCase()}`,
       status: TicketStatus.ISSUED,
       issuedAt: new Date(),
       totemDeviceId,
       serviceSummary: buildTicketSummary(assignment),
     },
-    include: {
-      assignment: { include: assignmentInclude },
-      selection: { include: { mainCourseOption: true, dessertOption: true } },
-      totemDevice: true,
-    },
+    include: { assignment: { include: assignmentInclude }, selection: { include: { mainCourseOption: true, dessertOption: true } }, totemDevice: true },
   });
 
-  await writeLog({
-    clientId: created.clientId,
-    employeeId: created.employeeId,
-    ticketId: created.id,
-    totemDeviceId,
-    action: TicketLogAction.ISSUE,
-    statusSnapshot: created.status,
-    reason: "Ticket emitido o recuperado para servicio diario.",
-  });
-
+  await writeLog({ clientId: created.clientId, employeeId: created.employeeId, ticketId: created.id, totemDeviceId, action: TicketLogAction.ISSUE, statusSnapshot: created.status, reason: "Ticket emitido o recuperado para servicio diario." });
   return created;
 }
 
 export async function lookupTotemService(input: { clientSlug: string; deviceCode: string; rut: string }) {
   const normalizedRut = normalizeRut(input.rut);
-  const device = await prisma.totemDevice.findFirst({
-    where: {
-      code: input.deviceCode,
-      active: true,
-      client: { slug: input.clientSlug },
-    },
-    include: { client: true, worksite: true },
-  });
+  const device = await prisma.totemDevice.findFirst({ where: { code: input.deviceCode, active: true, client: { slug: input.clientSlug } }, include: { client: true, worksite: true } });
 
   if (!device) {
-    await writeLog({
-      action: TicketLogAction.REJECT,
-      reason: "Totem no encontrado o inactivo.",
-      payload: input,
-    });
-
+    await writeLog({ action: TicketLogAction.REJECT, reason: "Totem no encontrado o inactivo.", payload: input });
     return { status: "ERROR", message: "Totem no configurado." } as const;
   }
 
   const employee = await prisma.employee.findFirst({
-    where: {
-      clientId: device.clientId,
-      rut: normalizedRut,
-    },
-    include: {
-      client: true,
-      shift: true,
-      snackType: true,
-      worksite: true,
-      costCenter: true,
-      contract: true,
-    },
+    where: { clientId: device.clientId, rut: normalizedRut },
+    include: { client: true, shift: true, snackType: true, worksite: true, costCenter: true, contract: true },
   });
-
   if (!employee) {
-    await writeLog({
-      clientId: device.clientId,
-      totemDeviceId: device.id,
-      action: TicketLogAction.REJECT,
-      reason: "Trabajador no encontrado.",
-      payload: { rut: normalizedRut },
-    });
+    await writeLog({ clientId: device.clientId, totemDeviceId: device.id, action: TicketLogAction.REJECT, reason: "Trabajador no encontrado.", payload: { rut: normalizedRut } });
     return { status: "NOT_FOUND", message: "Trabajador no encontrado." } as const;
   }
-
   if (!employee.active) {
-    await writeLog({
-      clientId: device.clientId,
-      employeeId: employee.id,
-      totemDeviceId: device.id,
-      action: TicketLogAction.REJECT,
-      reason: "Trabajador inactivo.",
-    });
+    await writeLog({ clientId: device.clientId, employeeId: employee.id, totemDeviceId: device.id, action: TicketLogAction.REJECT, reason: "Trabajador inactivo." });
     return { status: "NOT_AUTHORIZED", message: "Trabajador inactivo." } as const;
   }
 
-  const assignment = await getOrCreateDailyAssignment(employee.id, new Date());
-
+  const assignment = await getOrCreateDailyAssignment(employee.id, new Date(), ServiceType.LUNCH);
   if (!assignment.eligible) {
-    await writeLog({
-      clientId: device.clientId,
-      employeeId: employee.id,
-      totemDeviceId: device.id,
-      action: TicketLogAction.NOT_ALLOWED,
-      reason: "El trabajador no tiene servicio asignado hoy.",
-    });
+    await writeLog({ clientId: device.clientId, employeeId: employee.id, totemDeviceId: device.id, action: TicketLogAction.NOT_ALLOWED, reason: "El trabajador no tiene servicio asignado hoy." });
     return { status: "NOT_AUTHORIZED", message: "No autorizado para consumir hoy." } as const;
   }
 
   const ticket = await getOrCreateTicketForAssignment(assignment.id, device.id);
-
   if (ticket.status === TicketStatus.CONSUMED) {
-    await writeLog({
-      clientId: ticket.clientId,
-      employeeId: ticket.employeeId,
-      ticketId: ticket.id,
-      totemDeviceId: device.id,
-      action: TicketLogAction.DUPLICATE_ATTEMPT,
-      statusSnapshot: ticket.status,
-      reason: "Intento de consumo duplicado.",
-    });
-    return {
-      status: "ALREADY_CONSUMED",
-      message: "El servicio ya fue consumido hoy.",
-      ticket,
-      employee,
-      assignment,
-    } as const;
+    await writeLog({ clientId: ticket.clientId, employeeId: ticket.employeeId, ticketId: ticket.id, totemDeviceId: device.id, action: TicketLogAction.DUPLICATE_ATTEMPT, statusSnapshot: ticket.status, reason: "Intento de consumo duplicado." });
+    return { status: "ALREADY_CONSUMED", message: "El servicio ya fue consumido hoy.", ticket, employee, assignment } as const;
   }
 
-  await prisma.totemDevice.update({
-    where: { id: device.id },
-    data: { lastSeenAt: new Date() },
-  });
+  await prisma.totemDevice.update({ where: { id: device.id }, data: { lastSeenAt: new Date() } });
+  await writeLog({ clientId: device.clientId, employeeId: employee.id, ticketId: ticket.id, totemDeviceId: device.id, action: TicketLogAction.LOOKUP, statusSnapshot: ticket.status, reason: "Consulta exitosa desde totem." });
 
-  await writeLog({
-    clientId: device.clientId,
-    employeeId: employee.id,
-    ticketId: ticket.id,
-    totemDeviceId: device.id,
-    action: TicketLogAction.LOOKUP,
-    statusSnapshot: ticket.status,
-    reason: "Consulta exitosa desde totem.",
-  });
-
-  return {
-    status: "VALID",
-    message: "Servicio valido para consumir.",
-    ticket,
-    employee,
-    assignment,
-    device,
-  } as const;
+  return { status: "VALID", message: "Servicio valido para consumir.", ticket, employee, assignment, device } as const;
 }
 
 export async function consumeTicketFromTotem(input: { clientSlug: string; deviceCode: string; ticketId: string }) {
-  const device = await prisma.totemDevice.findFirst({
-    where: {
-      code: input.deviceCode,
-      active: true,
-      client: { slug: input.clientSlug },
-    },
-  });
-
-  if (!device) {
-    throw new Error("Totem no configurado.");
-  }
+  const device = await prisma.totemDevice.findFirst({ where: { code: input.deviceCode, active: true, client: { slug: input.clientSlug } } });
+  if (!device) throw new Error("Totem no configurado.");
 
   const ticket = await prisma.consumptionTicket.findUnique({
     where: { id: input.ticketId },
-    include: {
-      assignment: { include: assignmentInclude },
-      selection: { include: { mainCourseOption: true, dessertOption: true } },
-    },
+    include: { assignment: { include: assignmentInclude }, selection: { include: { mainCourseOption: true, dessertOption: true } } },
   });
-
-  if (!ticket || ticket.clientId !== device.clientId) {
-    throw new Error("Ticket no encontrado para este cliente.");
-  }
+  if (!ticket || ticket.clientId !== device.clientId) throw new Error("Ticket no encontrado para este cliente.");
 
   if (ticket.status === TicketStatus.CONSUMED) {
-    await writeLog({
-      clientId: ticket.clientId,
-      employeeId: ticket.employeeId,
-      ticketId: ticket.id,
-      totemDeviceId: device.id,
-      action: TicketLogAction.DUPLICATE_ATTEMPT,
-      statusSnapshot: ticket.status,
-      reason: "Se bloqueo un doble consumo.",
-    });
-
+    await writeLog({ clientId: ticket.clientId, employeeId: ticket.employeeId, ticketId: ticket.id, totemDeviceId: device.id, action: TicketLogAction.DUPLICATE_ATTEMPT, statusSnapshot: ticket.status, reason: "Se bloqueo un doble consumo." });
     return ticket;
   }
 
   const updated = await prisma.consumptionTicket.update({
     where: { id: ticket.id },
-    data: {
-      status: TicketStatus.CONSUMED,
-      validatedAt: new Date(),
-      consumedAt: new Date(),
-      totemDeviceId: device.id,
-    },
-    include: {
-      assignment: { include: assignmentInclude },
-      selection: { include: { mainCourseOption: true, dessertOption: true } },
-      totemDevice: true,
-    },
+    data: { status: TicketStatus.CONSUMED, validatedAt: new Date(), consumedAt: new Date(), totemDeviceId: device.id },
+    include: { assignment: { include: assignmentInclude }, selection: { include: { mainCourseOption: true, dessertOption: true } }, totemDevice: true },
   });
 
-  await writeLog({
-    clientId: updated.clientId,
-    employeeId: updated.employeeId,
-    ticketId: updated.id,
-    totemDeviceId: device.id,
-    action: TicketLogAction.CONSUME,
-    statusSnapshot: updated.status,
-    reason: "Servicio consumido correctamente desde totem.",
-  });
-
+  await writeLog({ clientId: updated.clientId, employeeId: updated.employeeId, ticketId: updated.id, totemDeviceId: device.id, action: TicketLogAction.CONSUME, statusSnapshot: updated.status, reason: "Servicio consumido correctamente desde totem." });
   return updated;
 }

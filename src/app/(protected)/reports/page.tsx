@@ -1,13 +1,13 @@
 import { RoleCode } from "@prisma/client";
 import { subDays } from "date-fns";
 
-import { requireSession } from "@/auth";
+import { requireRole } from "@/auth";
 import { DataTable, PageShell, SectionCard, StatCard } from "@/components/ui";
 import { formatDate } from "@/lib/utils";
 import { getConsumptionReport } from "@/modules/reports/report-service";
 
 export default async function ReportsPage() {
-  const session = await requireSession();
+  const session = await requireRole([RoleCode.WESTERFOOD_ADMIN, RoleCode.CLIENT_HR]);
   const report = await getConsumptionReport({
     from: subDays(new Date(), 15),
     to: new Date(),

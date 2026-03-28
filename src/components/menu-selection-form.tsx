@@ -1,10 +1,12 @@
 "use client";
 
+import { ServiceType } from "@prisma/client";
 import { useState, useTransition } from "react";
 
 export function MenuSelectionForm({
   employeeId,
   menuDay,
+  serviceType = ServiceType.LUNCH,
   defaultMainCourseOptionId,
   defaultDessertOptionId,
 }: {
@@ -14,6 +16,7 @@ export function MenuSelectionForm({
     mainCourseOptions: Array<{ id: string; name: string }>;
     dessertOptions: Array<{ id: string; name: string }>;
   };
+  serviceType?: ServiceType;
   defaultMainCourseOptionId?: string;
   defaultDessertOptionId?: string;
 }) {
@@ -33,12 +36,7 @@ export function MenuSelectionForm({
       const response = await fetch("/api/menu-selections", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          employeeId,
-          menuDayId: menuDay.id,
-          mainCourseOptionId,
-          dessertOptionId,
-        }),
+        body: JSON.stringify({ employeeId, menuDayId: menuDay.id, serviceType, mainCourseOptionId, dessertOptionId }),
       });
       const data = await response.json();
       setMessage(response.ok ? "Seleccion guardada correctamente." : data.error ?? "No fue posible guardar la seleccion.");
@@ -51,12 +49,7 @@ export function MenuSelectionForm({
         <p className="mb-2 text-sm font-medium text-zinc-700">Fondo</p>
         <div className="grid gap-2 md:grid-cols-2">
           {menuDay.mainCourseOptions.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => setMainCourseOptionId(option.id)}
-              className={`rounded-xl border px-4 py-3 text-left ${mainCourseOptionId === option.id ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 bg-white text-zinc-800"}`}
-            >
+            <button key={option.id} type="button" onClick={() => setMainCourseOptionId(option.id)} className={`rounded-xl border px-4 py-3 text-left ${mainCourseOptionId === option.id ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 bg-white text-zinc-800"}`}>
               {option.name}
             </button>
           ))}
@@ -66,12 +59,7 @@ export function MenuSelectionForm({
         <p className="mb-2 text-sm font-medium text-zinc-700">Postre</p>
         <div className="grid gap-2 md:grid-cols-2">
           {menuDay.dessertOptions.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => setDessertOptionId(option.id)}
-              className={`rounded-xl border px-4 py-3 text-left ${dessertOptionId === option.id ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 bg-white text-zinc-800"}`}
-            >
+            <button key={option.id} type="button" onClick={() => setDessertOptionId(option.id)} className={`rounded-xl border px-4 py-3 text-left ${dessertOptionId === option.id ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 bg-white text-zinc-800"}`}>
               {option.name}
             </button>
           ))}

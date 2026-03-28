@@ -14,7 +14,12 @@ const schema = z.object({
 export async function GET(request: Request) {
   const session = await requireSession();
   const url = new URL(request.url);
+
   try {
+    if (session.user.roleCode !== RoleCode.WESTERFOOD_ADMIN && session.user.roleCode !== RoleCode.CLIENT_HR) {
+      return jsonError("No autorizado.", 403);
+    }
+
     const payload = schema.parse({
       from: url.searchParams.get("from"),
       to: url.searchParams.get("to"),
