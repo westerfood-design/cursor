@@ -2,24 +2,30 @@
 
 Plataforma SaaS multiempresa para gestionar alimentacion corporativa, validacion operativa y autoservicio por totem.
 
-## Estado actual del repositorio
+## Estado del proyecto
 
-El proyecto ya cuenta con una base funcional de MVP sobre Next.js, Prisma y autenticacion por roles. En esta iteracion quedaron explicitadas y reforzadas la **Fase 1** y la **Fase 2** del producto.
+El repositorio ya incluye una base funcional del MVP con:
+
+- autenticacion por roles
+- clientes
+- trabajadores
+- turnos
+- colacion
+- contratos
+- faenas
+- centros de costo
+- menus semanales
+- seleccion diaria validada
+- totem por RUT
+- ticket unico diario
+- reportes operativos
+- base de estado de pago
+- exportaciones CSV
 
 ## Documentacion principal
 
 - [Fase 1 - Arquitectura, alcance MVP y decisiones tecnicas](./docs/fase-1-arquitectura.md)
 - [Fase 2 - Modelo de datos, enums y estrategia multi-tenant](./docs/fase-2-modelo-de-datos.md)
-
-## Resumen rapido
-
-WesterFood SaaS centraliza:
-- seleccion de menu semanal
-- administracion de trabajadores y turnos
-- colacion configurable por tenant
-- ticket unico diario por servicio
-- validacion de consumo via totem
-- reportes operativos base
 
 ## Stack tecnico
 
@@ -47,20 +53,67 @@ src/
 docs/
   fase-1-arquitectura.md
   fase-2-modelo-de-datos.md
+scripts/
+  setup-local.sh
+  start-local.sh
+docker-compose.yml
 ```
 
-## Puesta en marcha
+## Ejecutar desde GitHub (recomendado)
 
-1. Copia `.env.example` a `.env`
-2. Configura una base PostgreSQL accesible en `DATABASE_URL`
-3. Ejecuta:
+### Opcion A: con Docker
+
+1. Clona el repo
+2. Copia variables de entorno
+3. Levanta PostgreSQL
+4. Aplica schema y seed
+5. Ejecuta la app
 
 ```bash
+git clone <TU_REPO_GITHUB>
+cd cursor
+cp .env.example .env
+
+docker compose up -d postgres
+# o: docker-compose up -d postgres
+
 npm install
 npm run db:generate
 npm run db:push
 npm run db:seed
 npm run dev
+```
+
+Abrir en navegador:
+
+```text
+http://localhost:3000/login
+```
+
+### Opcion B: setup rapido
+
+Si ya tienes PostgreSQL local corriendo y accesible por `DATABASE_URL`:
+
+```bash
+cp .env.example .env
+bash scripts/setup-local.sh
+npm run dev
+```
+
+### Opcion C: arranque todo en uno
+
+```bash
+bash scripts/start-local.sh
+```
+
+## Variables de entorno
+
+Archivo base:
+
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/westerfood"
+NEXTAUTH_SECRET="change-this-secret"
+NEXTAUTH_URL="http://localhost:3000"
 ```
 
 ## Credenciales demo
@@ -69,9 +122,20 @@ npm run dev
 - RRHH cliente: `rrhh@acme.cl` / `WesterFood123!`
 - Trabajador: `trabajador@acme.cl` / `WesterFood123!`
 
-## Notas de implementacion
+## Comandos utiles
 
-- la unicidad operativa ya esta preparada por `serviceType`
+```bash
+npm run dev
+npm run build
+npm run lint
+npm run db:generate
+npm run db:push
+npm run db:seed
+```
+
+## Notas
+
+- la unicidad operativa esta preparada por `serviceType`
 - el tenant define `timezone` para evolucionar reglas de cierre con mayor precision
 - reportes operativos restringidos a Admin WesterFood y RRHH Cliente
-- la siguiente fase natural es completar CRUDs de contratos, faenas, centros de costo, menus y administracion de totems
+- el repositorio queda listo para clonar y ejecutar localmente desde GitHub con PostgreSQL en Docker o una instancia propia
